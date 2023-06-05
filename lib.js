@@ -218,7 +218,6 @@ fn main(input: FragmentInput) -> FragmentOutput {
 `
 
 async function init(canvas) {
-    return webglInit(canvas)
     if (!navigator?.gpu?.requestAdapter) {
         return webglInit(canvas)
     }
