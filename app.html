@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<header>
+	<meta charset='utf-8'>
+	<style>
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+		}
+	</style>
+</header>
+
+<body>
+	<div>
+		<label>width(宽度):<input id='width' value='12'></label><br>
+		<label>height(高度):<input id='height' value='24'></label><br>
+		<label>speed(移动速度):<input id='speed' value='2'></label><br>
+		<button id='button'>启动</button>
+		<button id='speedset'>仅设置速度</button>
+	</div>
+	<div><canvas id='canvas' width='400' height='800'
+			style='min-height: calc(100vh - 8rem);position: absolute;left: 50vw;transform: translateX(-50%);'></canvas></div>
+	<script src='settings.js'></script>
+	<script src='lib.js'></script>
+	<script src='app.js'></script>
+</body>
+
+</html>
