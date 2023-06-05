@@ -1,11 +1,13 @@
 // init render
 const canvas = document.getElementById("canvas")
+const movespeed = 3
 let speed = 2
 let width = 12
 let height = 24
 let running = null
 let rendered = ''
 let render = null
+let level = 5
 
 function checkView() {
     let frame = ''
@@ -29,53 +31,112 @@ function checkView() {
     }
 }
 
+// handle action
+function ArrowLeft() {
+    if (leftable(movespeed)) {
+        controling.forEach(c => {
+            let { x, y } = position.get(c)
+            position.set(c, { x: x - movespeed, y })
+            position.data[y][x - movespeed] = position.data[y][x]
+            position.data[y][x] = null
+        })
+        checkView()
+    }
+}
+
+function ArrowRight() {
+    if (rightable(width, movespeed)) {
+        controling.reverse().forEach(c => {
+            let { x, y } = position.get(c)
+            position.set(c, { x: x + movespeed, y })
+            position.data[y][x + movespeed] = position.data[y][x]
+            position.data[y][x] = null
+        })
+        controling.reverse()
+        checkView()
+    }
+}
+
+function ArrowDown() {
+    if (controlable()) {
+        controling.reverse().forEach(c => {
+            let { x, y } = position.get(c)
+            position.set(c, { x, y: y - movespeed })
+            position.data[y - movespeed][x] = position.data[y][x]
+            position.data[y][x] = null
+        })
+        controling.reverse()
+        checkView()
+    }
+}
+
 // register key
 document.addEventListener('keydown', ({ code }) => {
     switch (code) {
         case 'ArrowLeft':
-            if (leftable(speed)) {
-                controling.forEach(c => {
-                    let { x, y } = position.get(c)
-                    position.set(c, { x: x - speed, y })
-                    position.data[y][x - speed] = position.data[y][x]
-                    position.data[y][x] = null
-                })
-                checkView()
-            }
+            ArrowLeft()
             break
         case 'ArrowRight':
-            if (rightable(width, speed)) {
-                controling.reverse().forEach(c => {
-                    let { x, y } = position.get(c)
-                    position.set(c, { x: x + speed, y })
-                    position.data[y][x + speed] = position.data[y][x]
-                    position.data[y][x] = null
-                })
-                controling.reverse()
-                checkView()
-            }
+            ArrowRight()
             break
         case 'ArrowDown':
-            if (controlable()) {
-                controling.reverse().forEach(c => {
-                    let { x, y } = position.get(c)
-                    position.set(c, { x, y: y - speed })
-                    position.data[y - speed][x] = position.data[y][x]
-                    position.data[y][x] = null
-                })
-                controling.reverse()
-                checkView()
-            }
+            ArrowDown()
             break
     }
 })
 
+let rect = canvas.getBoundingClientRect()
+let pointerTimer = null
+let touchTimer = null
+
+function handlePointerDown(e) {
+    e.preventDefault()
+
+    if (e.clientX < rect.left + rect.width / 2) {
+        ArrowLeft()
+        pointerTimer = setTimeout(() => pointerTimer = setInterval(ArrowLeft, 50), 500)
+    } else {
+        ArrowRight()
+        pointerTimer = setTimeout(() => pointerTimer = setInterval(ArrowRight, 50), 500)
+    }
+}
+
+function handlePointerUp(e) {
+    e.preventDefault()
+    if (pointerTimer) {
+        clearTimeout(pointerTimer)
+        pointerTimer = null
+    }
+}
+
+function handleTouchStart(e) {
+    e.preventDefault()
+    if (e.touches.length === 2) {
+        ArrowDown()
+        touchTimer = setTimeout(() => touchTimer = setInterval(ArrowDown, 50), 500)
+    }
+}
+
+function handleTouchEnd(e) {
+    e.preventDefault()
+    if (touchTimer) {
+        clearTimeout(touchTimer)
+        touchTimer = null
+    }
+}
+
+canvas.addEventListener('touchstart', handleTouchStart, false)
+canvas.addEventListener('touchend', handleTouchEnd, false)
+canvas.addEventListener('pointerdown', handlePointerDown, false)
+canvas.addEventListener('pointerup', handlePointerUp, false)
 
 async function start() {
     if (!render) render = await init(canvas)
-    speed = 3 * parseInt(document.getElementById('speed').value)
+    speed = 3 * parseFloat(document.getElementById('speed').value)
     width = 6 * parseInt(document.getElementById('width').value)
     height = 6 * parseInt(document.getElementById('height').value)
+    level = Math.min(colormap.length - 1, parseInt(document.getElementById('color').value))
+    document.getElementById('color').value = level
     window.position = new dimension('position', emptyMatrix(width, height), flowsand, checkPosition)
 
     running = setInterval(() => {
@@ -84,17 +145,51 @@ async function start() {
     }, 100 / speed)
 }
 
-document.getElementById('button').addEventListener('click', () => {
-    if (running) clearInterval(running)
-    start()
-})
-
 document.getElementById('speedset').addEventListener('click', () => {
     if (running) clearInterval(running)
-    speed = 3 * parseInt(document.getElementById('speed').value)
+    let value = Math.max((level / 3 * 10 | 0) / 10, parseFloat(document.getElementById('speed').value))
+    document.getElementById('speed').value = value
+    speed = 3 * value
     running = setInterval(() => {
         dimension.next()
         requestAnimationFrame(checkView)
     }, 100 / speed)
+})
+
+document.getElementById('L1').addEventListener('click', () => {
+    if (running) clearInterval(running)
+    document.getElementById('speed').value = 1
+    document.getElementById('width').value = 12
+    document.getElementById('height').value = 24
+    document.getElementById('color').value = 3
+    start()
+})
+document.getElementById('L2').addEventListener('click', () => {
+    if (running) clearInterval(running)
+    document.getElementById('speed').value = 1.67
+    document.getElementById('width').value = 16
+    document.getElementById('height').value = 32
+    document.getElementById('color').value = 5
+    start()
+})
+document.getElementById('L3').addEventListener('click', () => {
+    if (running) clearInterval(running)
+    document.getElementById('speed').value = 2.3
+    document.getElementById('width').value = 20
+    document.getElementById('height').value = 40
+    document.getElementById('color').value = 7
+    start()
+})
+document.getElementById('L4').addEventListener('click', () => {
+    if (running) clearInterval(running)
+    document.getElementById('speed').value = 3
+    document.getElementById('width').value = 24
+    document.getElementById('height').value = 48
+    document.getElementById('color').value = colormap.length - 1
+    start()
+})
+document.getElementById('custom').addEventListener('click', () => {
+    if (running) clearInterval(running)
+    start()
 })
 start()

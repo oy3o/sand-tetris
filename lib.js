@@ -123,7 +123,7 @@ function rightable(width, speed) {
 }
 
 function addBlock(Y, X) {
-    let color = (Math.random() * 4) | 0
+    let color = (Math.random() * level + 1) | 0
     let b = bests[(Math.random() * bests.length) | 0].map(row => row.map(t => t && ({ type: color })))
 
     for (let i = 0; i < b.length; i++) {
