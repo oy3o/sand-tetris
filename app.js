@@ -97,3 +97,4 @@ document.getElementById('speedset').addEventListener('click', () => {
         requestAnimationFrame(checkView)
     }, 100 / speed)
 })
+start()
