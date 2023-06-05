@@ -113,6 +113,8 @@ function handlePointerUp(e) {
 function handleTouchStart(e) {
     e.preventDefault()
     if (e.touches.length === 2) {
+        clearTimeout(pointerTimer)
+        pointerTimer = null
         Downing = true
         ArrowDown()
         touchTimer = setTimeout(() => touchTimer = setInterval(ArrowDown, 50), 500)
