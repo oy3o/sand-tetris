@@ -95,10 +95,22 @@ function handlePointerDown(e) {
     if (Downing) return;
     if (e.clientX < rect.left + rect.width / 2) {
         ArrowLeft()
-        pointerTimer = setTimeout(() => pointerTimer = setInterval(ArrowLeft, 50), 500)
+        pointerTimer = setTimeout(() => {
+            let innerclear = setInterval(() => {
+                if (pointerTimer != innerclear) clearInterval(innerclear)
+                ArrowLeft()
+            }, 50)
+            pointerTimer = innerclear
+        }, 500)
     } else {
         ArrowRight()
-        pointerTimer = setTimeout(() => pointerTimer = setInterval(ArrowRight, 50), 500)
+        pointerTimer = setTimeout(() => {
+            let innerclear = setInterval(() => {
+                if (pointerTimer != innerclear) clearInterval(innerclear)
+                ArrowRight()
+            }, 50)
+            pointerTimer = innerclear
+        }, 500)
     }
 }
 
