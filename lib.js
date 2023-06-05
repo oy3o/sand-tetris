@@ -149,7 +149,35 @@ function addBlock(Y, X) {
     return true
 }
 
+// load data
+function loadData(data, xsize, ysize) {
+    const rows = data.length
+    const cols = data[0].length
+    const vertices = []
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            const value = data[i][j]?.type
+            if (!value) continue
+            const color = colormap[value]
+            if (!color) continue
 
+            const x1 = -1 + j * xsize
+            const y1 = -1 + i * ysize
+            const x2 = x1 + xsize
+            const y2 = y1 + ysize
+
+            vertices.push(
+                x1, y1, ...color,
+                x2, y1, ...color,
+                x2, y2, ...color,
+                x1, y1, ...color,
+                x2, y2, ...color,
+                x1, y2, ...color,
+            )
+        }
+    }
+    return vertices
+}
 
 // init render
 const vert_wgsl = `
@@ -192,13 +220,13 @@ fn main(input: FragmentInput) -> FragmentOutput {
 async function init(canvas) {
     if (!navigator?.gpu?.requestAdapter) {
         document.body.innerHTML = '<h1>当前浏览器不支持WebGPU<br>The current browser does not support WebGPU</h1>'
-        return null
+        return webglInit(canvas)
     }
     let adapter = await navigator.gpu.requestAdapter()
     if (!adapter) {
         console.warn('Failed to get WebGPU adapter')
         document.body.innerHTML = '<h1>当前设备不支持WebGPU<br>The current device does not support WebGPU</h1>'
-        return null
+        return webglInit(canvas)
     }
     let device = await adapter.requestDevice()
     device.lost.then(async value => {
@@ -248,42 +276,15 @@ async function init(canvas) {
     })
 
     return function render(data, xsize, ysize) {
-        const rows = data.length
-        const cols = data[0].length
-        const vertices = []
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < cols; j++) {
-                if (!data[i][j]) continue
-                const value = data[i][j].type
-                if (value === 0) continue
-                const color = colormap[value]
-                if (!color) continue
-
-                const x1 = -1 + j * xsize
-                const y1 = -1 + i * ysize
-                const x2 = x1 + xsize
-                const y2 = y1 + ysize
-
-                vertices.push(
-                    x1, y1, ...color,
-                    x2, y1, ...color,
-                    x2, y2, ...color,
-                    x1, y1, ...color,
-                    x2, y2, ...color,
-                    x1, y2, ...color,
-                )
-            }
-        }
-
-        const verticesPass = new Float32Array(vertices)
-        const verticesBuffer = device.createBuffer({
-            size: verticesPass.byteLength,
+        const vertices = new Float32Array(loadData(data, xsize, ysize))
+        const VertexBuffer = device.createBuffer({
+            size: vertices.byteLength,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX,
             mappedAtCreation: true,
         })
 
-        new Float32Array(verticesBuffer.getMappedRange()).set(verticesPass)
-        verticesBuffer.unmap();
+        new Float32Array(VertexBuffer.getMappedRange()).set(vertices)
+        VertexBuffer.unmap();
 
         const renderPassDescriptor = {
             colorAttachments: [
@@ -300,12 +301,75 @@ async function init(canvas) {
         const commandEncoder = device.createCommandEncoder()
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
         passEncoder.setPipeline(pipeline)
-        passEncoder.setVertexBuffer(0, verticesBuffer)
-        passEncoder.draw(verticesPass.length / 6, 1, 0, 0)
+        passEncoder.setVertexBuffer(0, VertexBuffer)
+        passEncoder.draw(vertices.length / 6, 1, 0, 0)
         passEncoder.end()
 
         // Submit the commands to the GPU queue
         device.queue.submit([commandEncoder.finish()])
+    }
+}
+
+// downgrade webgl
+function webglInit(canvas) {
+    const vert_glsl = `
+        attribute vec2 position;
+        attribute vec4 color;
+
+        varying vec4 vColor;
+
+        void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
+        vColor = color;
+        }`
+
+    const frag_glsl = `
+        precision mediump float;
+
+        varying vec4 vColor;
+
+        void main() {
+        gl_FragColor = vColor;
+        }`
+    const gl = canvas.getContext('webgl');
+    if (!gl) {
+        document.body.innerHTML = '<h1>当前浏览器不支持WebGL<br>The current browser does not support WebGL</h1>'
+        return null
+    }
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertexShader, vert_glsl);
+    gl.compileShader(vertexShader);
+
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragmentShader, frag_glsl);
+    gl.compileShader(fragmentShader);
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    return function render(data, xsize, ysize) {
+        const vertices = loadData(data, xsize, ysize)
+        const VertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, VertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(program);
+
+        const positionLocation = gl.getAttribLocation(program, 'position');
+        const colorLocation = gl.getAttribLocation(program, 'color');
+
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 6 * Float32Array.BYTES_PER_ELEMENT, 0);
+
+        gl.enableVertexAttribArray(colorLocation);
+        gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 6 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+
+        gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 6);
     }
 }
 

@@ -17,7 +17,7 @@ function checkView() {
     if (frame != rendered) {
         rendered = frame
         render(position.data, 2 / width, 2 / height)
-        console.log(frame)
+        // console.log(frame)
     }
     if (!controlable()) {
         controling.length = 0
