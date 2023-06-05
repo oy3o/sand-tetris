@@ -132,6 +132,7 @@ canvas.addEventListener('pointerup', handlePointerUp, false)
 
 async function start() {
     if (!render) render = await init(canvas)
+    if (!render) document.body.innerHTML += '<br><h1>运行失败<br>Run Failed</h1>'
     speed = 3 * parseFloat(document.getElementById('speed').value)
     width = 6 * parseInt(document.getElementById('width').value)
     height = 6 * parseInt(document.getElementById('height').value)

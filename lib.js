@@ -190,10 +190,15 @@ fn main(input: FragmentInput) -> FragmentOutput {
 `
 
 async function init(canvas) {
+    if (!navigator?.gpu?.requestAdapter) {
+        document.body.innerHTML = '<h1>当前浏览器不支持WebGPU<br>The current browser does not support WebGPU</h1>'
+        return null
+    }
     let adapter = await navigator.gpu.requestAdapter()
     if (!adapter) {
         console.warn('Failed to get WebGPU adapter')
-        document.body.innerHTML = '<h1>当前浏览器不支持WebGPU<br>The current browser does not support WebGPU</h1>'
+        document.body.innerHTML = '<h1>当前设备不支持WebGPU<br>The current device does not support WebGPU</h1>'
+        return null
     }
     let device = await adapter.requestDevice()
     device.lost.then(async value => {
