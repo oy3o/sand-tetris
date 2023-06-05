@@ -97,7 +97,7 @@ function handlePointerDown(e) {
         ArrowLeft()
         pointerTimer = setTimeout(() => {
             let innerclear = setInterval(() => {
-                if (pointerTimer != innerclear) clearInterval(innerclear)
+                if ((pointerTimer != innerclear) || Downing) return clearInterval(innerclear)
                 ArrowLeft()
             }, 50)
             pointerTimer = innerclear
@@ -106,7 +106,7 @@ function handlePointerDown(e) {
         ArrowRight()
         pointerTimer = setTimeout(() => {
             let innerclear = setInterval(() => {
-                if (pointerTimer != innerclear) clearInterval(innerclear)
+                if ((pointerTimer != innerclear) || Downing) return clearInterval(innerclear)
                 ArrowRight()
             }, 50)
             pointerTimer = innerclear
