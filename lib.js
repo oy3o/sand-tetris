@@ -193,6 +193,7 @@ async function init(canvas) {
     let adapter = await navigator.gpu.requestAdapter()
     if (!adapter) {
         console.warn('Failed to get WebGPU adapter')
+        document.body.innerHTML = '<h1>当前浏览器不支持WebGPU<br>The current browser does not support WebGPU</h1>'
     }
     let device = await adapter.requestDevice()
     device.lost.then(async value => {
