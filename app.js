@@ -88,10 +88,11 @@ document.addEventListener('keydown', ({ code }) => {
 let rect = canvas.getBoundingClientRect()
 let pointerTimer = null
 let touchTimer = null
+let Downing = false
 
 function handlePointerDown(e) {
     e.preventDefault()
-
+    if (Downing) return;
     if (e.clientX < rect.left + rect.width / 2) {
         ArrowLeft()
         pointerTimer = setTimeout(() => pointerTimer = setInterval(ArrowLeft, 50), 500)
@@ -112,6 +113,7 @@ function handlePointerUp(e) {
 function handleTouchStart(e) {
     e.preventDefault()
     if (e.touches.length === 2) {
+        Downing = true
         ArrowDown()
         touchTimer = setTimeout(() => touchTimer = setInterval(ArrowDown, 50), 500)
     }
@@ -122,6 +124,7 @@ function handleTouchEnd(e) {
     if (touchTimer) {
         clearTimeout(touchTimer)
         touchTimer = null
+        Downing = false
     }
 }
 
@@ -167,7 +170,7 @@ document.getElementById('L1').addEventListener('click', () => {
 })
 document.getElementById('L2').addEventListener('click', () => {
     if (running) clearInterval(running)
-    document.getElementById('speed').value = 1.67
+    document.getElementById('speed').value = 1.6
     document.getElementById('width').value = 16
     document.getElementById('height').value = 32
     document.getElementById('color').value = 5
@@ -175,7 +178,7 @@ document.getElementById('L2').addEventListener('click', () => {
 })
 document.getElementById('L3').addEventListener('click', () => {
     if (running) clearInterval(running)
-    document.getElementById('speed').value = 2.3
+    document.getElementById('speed').value = 2.2
     document.getElementById('width').value = 20
     document.getElementById('height').value = 40
     document.getElementById('color').value = 7
