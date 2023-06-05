@@ -218,6 +218,7 @@ fn main(input: FragmentInput) -> FragmentOutput {
 `
 
 async function init(canvas) {
+    return webglInit(canvas)
     if (!navigator?.gpu?.requestAdapter) {
         return webglInit(canvas)
     }
@@ -311,23 +312,19 @@ async function init(canvas) {
 // downgrade webgl
 function webglInit(canvas) {
     const vert_glsl = `
-        attribute vec2 position
-        attribute vec4 color
-
-        varying vec4 vColor
-
+        attribute vec2 position;
+        attribute vec4 color;
+        varying vec4 vColor;
         void main() {
-        gl_Position = vec4(position, 0.0, 1.0)
-        vColor = color
+        gl_Position = vec4(position, 0.0, 1.0);
+        vColor = color;
         }`
 
     const frag_glsl = `
-        precision mediump float
-
-        varying vec4 vColor
-
+        precision mediump float;
+        varying vec4 vColor;
         void main() {
-        gl_FragColor = vColor
+        gl_FragColor = vColor;
         }`
     const gl = canvas.getContext('webgl')
     if (!gl) {
